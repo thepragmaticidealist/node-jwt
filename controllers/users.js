@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const User = require('../models/users');
 
 const connUri = process.env.MONGO_LOCAL_CONN_URL;
@@ -40,6 +41,14 @@ module.exports = {
             // We could compare passwords in our model instead of below as well
             bcrypt.compare(password, user.password).then(match => {
               if (match) {
+                // Create a token
+                const payload = { user: user.name };
+                const options = { expiresIn: '2d', issuer: 'https://scotch.io' };
+                const secret = process.env.JWT_SECRET;
+                const token = jwt.sign(payload, secret, {options});
+
+                console.log('TOKEN', token);
+                result.token = token;
                 result.status = 200;
                 result.result = user;
               } else {
