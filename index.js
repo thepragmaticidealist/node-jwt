@@ -12,10 +12,11 @@ const stage = require('./config')[environment];
 
 const routes = require('./routes/index.js');
 
-app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
   extended: true
 }));
+app.use(bodyParser.json());
+
 
 if (environment !== 'production') {
   app.use(logger('dev'));
