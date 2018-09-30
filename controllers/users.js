@@ -4,7 +4,6 @@ const jwt = require('jsonwebtoken');
 
 const connUri = process.env.MONGO_LOCAL_CONN_URL;
 const User = require('../models/users');
-const validateToken = require('../utils').validateToken;
 
 module.exports = {
   add: (req, res) => {
@@ -52,7 +51,6 @@ module.exports = {
                 const secret = process.env.JWT_SECRET;
                 const token = jwt.sign(payload, secret, options);
 
-                console.log('TOKEN', token);
                 result.token = token;
                 result.status = status;
                 result.result = user;
@@ -103,6 +101,11 @@ module.exports = {
             }
             res.status(status).send(result);
           });
+        } else {
+          status = 401;
+          result.status = status;
+          result.error = `Authentication error`;
+          res.status(status).send(result);
         }
       } else {
         status = 500;
