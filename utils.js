@@ -1,15 +1,28 @@
-const mongoClient = require('mongodb').MongoClient;
-const connUri = process.env.MONGO_DEV_CONN_URL;
+const jwt = require('jsonwebtoken');
 
 module.exports = {
-  connect: () => {
-    mongoClient.connect(connUri, { useNewUrlParser : true, authSource: 'admin' }, (err, client) => {
-      if (!err) {
-        console.log('CLIENT ????', client)
-      } else {
-        console.log(`Error connecting to mongo db ${err}`);
-        return;
+  validateToken: (req, res, next) => {
+    const authorizationHeaader = req.headers.authorization;
+    let result;
+    if (authorizationHeaader) {
+      const token = req.headers.authorization.split(' ')[1]; // Bearer <token>
+      const options = {
+        expiresIn: '2d',
+        issuer: 'https://scotch.io'
+      };
+      try {
+        result = jwt.verify(token, process.env.JWT_SECRET, options);
+        req.decoded = result;
+        next();
+      } catch (err) {
+        throw new Error(err);
       }
-    });
+    } else {
+      result = { 
+        error: `Authentication error. Token required.`,
+        status: 401 
+      };
+      res.status(401).send(result);
+    }
   }
-}
+};
