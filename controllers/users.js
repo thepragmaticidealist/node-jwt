@@ -1,27 +1,29 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const User = require('../models/users');
 
+const User = require('../models/users');
 const connUri = process.env.MONGO_LOCAL_CONN_URL;
 
 module.exports = {
-  add: (req, res, next) => {
-    mongoose.connect(connUri, { useNewUrlParser : true, authSource: 'admin' }, (err, resp) => {
+  add: (req, res) => {
+    mongoose.connect(connUri, { useNewUrlParser : true, authSource: 'admin' }, (err) => {
       if (!err) {
         const { name, password } = req.body;
         const user = new User({ name, password}); // document = instance of a model
         // TODO: We can hash the password here as well before we insert
         user.save((err, user) => {
           let result = {};
+          let status = 201;
           if (!err) {
-            result.status = 201;
+            result.status = status;
             result.result = user;
           } else {
-            result.status = 500;
+            status = 500;
+            result.status = status;
             result.error = err;
           }
-          res.send(result);
+          res.status(status).send(result);
         });
       } else {
         console.log(`Error connecting to mongo db ${err}`);
@@ -30,49 +32,60 @@ module.exports = {
     });
   },
 
-  login: (req, res, next) => {
+  login: (req, res) => {
     const { name, password } = req.body;
 
-    mongoose.connect(connUri, { useNewUrlParser: true }, (err, resp) => {
+    mongoose.connect(connUri, { useNewUrlParser: true }, (err) => {
       let result = {};
+      let status = 200;
       if(!err) {
         User.findOne({name}, (err, user) => {
           if (!err && user) {
             // We could compare passwords in our model instead of below as well
             bcrypt.compare(password, user.password).then(match => {
               if (match) {
+                status = 200;
                 // Create a token
                 const payload = { user: user.name };
                 const options = { expiresIn: '2d', issuer: 'https://scotch.io' };
                 const secret = process.env.JWT_SECRET;
-                const token = jwt.sign(payload, secret, {options});
+                const token = jwt.sign(payload, secret, options);
 
                 console.log('TOKEN', token);
                 result.token = token;
-                result.status = 200;
+                result.status = status;
                 result.result = user;
               } else {
-                result.status = 401;
+                status = 401;
+                result.status = status;
                 result.error = `Authentication error`;
               }
-              res.send(result);
+              res.status(status).send(result);
             }).catch(err => {
-              result.status = 500;
+              status = 500;
+              result.status = status;
               result.error = err;
-              res.send(result);
-            })
+              res.status(status).send(result);
+            });
           } else {
-            result.status = 404;
+            status = 404;
+            result.status = status;
             result.error = err;
-            res.send(result);
+            res.status(status).send(result);
           }
         });
       } else {
-        console.log(`Error connecting to mongo db ${err}`);
-        result.status = 500;
+        status = 500;
+        result.status = status;
         result.error = err;
-        res.send(result);
+        res.status(status).send(result);
       }
     });
+  },
+
+  getAll: (req, res) => {
+    mongoose.connect(connUri, { useNewUrlParser: true}, (err) => {
+
+    })
   }
-}
+};
