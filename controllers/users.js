@@ -8,13 +8,13 @@ const User = require('../models/users');
 module.exports = {
   add: (req, res) => {
     mongoose.connect(connUri, { useNewUrlParser : true, authSource: 'admin' }, (err) => {
+      let result = {};
+      let status = 201;
       if (!err) {
         const { name, password } = req.body;
         const user = new User({ name, password}); // document = instance of a model
         // TODO: We can hash the password here as well before we insert
         user.save((err, user) => {
-          let result = {};
-          let status = 201;
           if (!err) {
             result.status = status;
             result.result = user;
@@ -26,8 +26,10 @@ module.exports = {
           res.status(status).send(result);
         });
       } else {
-        console.log(`Error connecting to mongo db ${err}`);
-        return;
+        status = 500;
+        result.status = status;
+        result.error = err;
+        res.status(status).send(result);
       }
     });
   },
