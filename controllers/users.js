@@ -7,7 +7,7 @@ const User = require('../models/users');
 
 module.exports = {
   add: (req, res) => {
-    mongoose.connect(connUri, { useNewUrlParser : true, authSource: 'admin' }, (err) => {
+    mongoose.connect(connUri, { useNewUrlParser : true }, (err) => {
       let result = {};
       let status = 201;
       if (!err) {
