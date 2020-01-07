@@ -7,7 +7,7 @@ const User = require('../models/users');
 
 module.exports = {
   add: (req, res) => {
-    mongoose.connect(connUri, { useNewUrlParser : true }, (err) => {
+    mongoose.connect(connUri, { useNewUrlParser : true, useUnifiedTopology: true }, (err) => {
       let result = {};
       let status = 201;
       if (!err) {
@@ -24,12 +24,16 @@ module.exports = {
             result.error = err;
           }
           res.status(status).send(result);
+          // Close the connection after saving
+          mongoose.connection.close();
         });
       } else {
         status = 500;
         result.status = status;
         result.error = err;
         res.status(status).send(result);
+
+        mongoose.connection.close();
       }
     });
   },
@@ -37,10 +41,11 @@ module.exports = {
   login: (req, res) => {
     const { name, password } = req.body;
 
-    mongoose.connect(connUri, { useNewUrlParser: true }, (err) => {
+    mongoose.connect(connUri, { useNewUrlParser: true, useUnifiedTopology: true }, (err) => {
       let result = {};
       let status = 200;
       if(!err) {
+
         User.findOne({name}, (err, user) => {
           if (!err && user) {
             // We could compare passwords in our model instead of below as well
@@ -67,6 +72,8 @@ module.exports = {
               result.status = status;
               result.error = err;
               res.status(status).send(result);
+
+              mongoose.connection.close();
             });
           } else {
             status = 404;
@@ -74,18 +81,21 @@ module.exports = {
             result.error = err;
             res.status(status).send(result);
           }
-        });
+        }).then(() => 
+          mongoose.connection.close());
       } else {
         status = 500;
         result.status = status;
         result.error = err;
         res.status(status).send(result);
+
+        mongoose.connection.close();
       }
     });
   },
 
   getAll: (req, res) => {
-    mongoose.connect(connUri, { useNewUrlParser: true }, (err) => {
+    mongoose.connect(connUri, { useNewUrlParser: true, useUnifiedTopology: true }, (err) => {
       let result = {};
       let status = 200;
       if (!err) {
@@ -102,18 +112,22 @@ module.exports = {
               result.error = err;
             }
             res.status(status).send(result);
-          });
+          }).then(() => mongoose.connection.close());
         } else {
           status = 401;
           result.status = status;
           result.error = `Authentication error`;
           res.status(status).send(result);
+
+          mongoose.connection.close();
         }
       } else {
         status = 500;
         result.status = status;
         result.error = err;
         res.status(status).send(result);
+
+        mongoose.connection.close();
       }
     });
   }
